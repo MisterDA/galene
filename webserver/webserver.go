@@ -9,6 +9,7 @@ import (
 	"html"
 	"io"
 	"log"
+	"mime"
 	"net/http"
 	"net/url"
 	"os"
@@ -214,6 +215,10 @@ func (fh *fileHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		p = index
 	}
 
+	if mimeType := mime.TypeByExtension(filepath.Ext(fi.Name())); mimeType != "" {
+		w.Header().Set("Content-Type", mimeType)
+	}
+
 	makeCachable(w, p, fi, true)
 	http.ServeContent(w, r, fi.Name(), fi.ModTime(), f)
 }
@@ -236,6 +241,10 @@ func serveFile(w http.ResponseWriter, r *http.Request, p string) {
 	if fi.IsDir() {
 		httpError(w, ErrIsDirectory)
 		return
+	}
+
+	if mimeType := mime.TypeByExtension(filepath.Ext(fi.Name())); mimeType != "" {
+		w.Header().Set("Content-Type", mimeType)
 	}
 
 	makeCachable(w, p, fi, true)
@@ -430,7 +439,7 @@ func statsHandler(w http.ResponseWriter, r *http.Request, dataDir string) {
 	fmt.Fprintf(w, "</body></html>\n")
 }
 
-var wsUpgrader = websocket.Upgrader {
+var wsUpgrader = websocket.Upgrader{
 	HandshakeTimeout: 30 * time.Second,
 }
 
